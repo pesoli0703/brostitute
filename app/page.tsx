@@ -12,12 +12,17 @@ import {
   ArrowRight,
   Database,
   CheckCircle2,
-  Crown
+  Crown,
+  UserPlus,
+  LogIn
 } from 'lucide-react'
 import { TopBar } from '@/components/navigation/TopBar'
 import { MobileNavBar } from '@/components/navigation/MobileNavBar'
+import { useAuth } from '@/lib/context/AuthContext'
 
 export default function HomePage() {
+  const { user } = useAuth()
+
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col pb-20 md:pb-0">
       <TopBar />
@@ -45,20 +50,39 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/discover"
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-400 text-white font-semibold rounded-2xl shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
-            >
-              Start Discovering
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                href="/discover"
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-400 text-white font-semibold rounded-2xl shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+              >
+                Go to Discovery Deck
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-400 text-white font-semibold rounded-2xl shadow-xl shadow-rose-950/50 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Create Free Account
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="w-full sm:w-auto px-6 py-4 bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-800 font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all"
+                >
+                  <LogIn className="w-4 h-4 text-rose-400" />
+                  Sign In
+                </Link>
+              </>
+            )}
 
             <Link
-              href="/setup"
-              className="w-full sm:w-auto px-6 py-4 bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-800 font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all"
+              href="/discover"
+              className="w-full sm:w-auto px-6 py-4 bg-stone-900/60 hover:bg-stone-800/80 text-stone-300 border border-stone-800 font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all text-sm"
             >
-              <Database className="w-4 h-4 text-emerald-400" />
-              Connect Supabase
+              Preview Matches
             </Link>
           </div>
 
@@ -157,13 +181,19 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 flex gap-4">
+                <Link
+                  href="/register"
+                  className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-950"
+                >
+                  Join Brostitute Now
+                </Link>
                 <Link
                   href="/safety"
-                  className="inline-flex items-center gap-2 text-rose-400 hover:text-rose-300 font-semibold text-sm transition-colors"
+                  className="inline-flex items-center gap-2 text-stone-300 hover:text-white font-semibold text-xs transition-colors py-3"
                 >
-                  Visit Safety Center & Community Guidelines
-                  <ArrowRight className="w-4 h-4" />
+                  Safety Guidelines
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
@@ -171,44 +201,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* AI Features Explanation */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-stone-900 bg-stone-950/60">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold mb-4">
-            <Zap className="w-3.5 h-3.5" />
-            Ethical Intelligence
-          </div>
-          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            AI Designed to Enhance, Never Discriminate
-          </h3>
-          <p className="max-w-2xl mx-auto text-stone-400 text-sm leading-relaxed mb-8">
-            Our AI architecture assists with witty conversation icebreakers, profile storytelling improvements, and scam pattern prevention. It never profiles or scores individuals based on protected personal characteristics.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-            <div className="p-5 rounded-2xl bg-stone-900 border border-stone-800">
-              <div className="font-semibold text-white text-sm mb-1">Smart Icebreakers</div>
-              <p className="text-stone-400 text-xs leading-relaxed">
-                Skip awkward "hey" messages with contextual starters based on mutual passions.
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl bg-stone-900 border border-stone-800">
-              <div className="font-semibold text-white text-sm mb-1">Profile Optimization</div>
-              <p className="text-stone-400 text-xs leading-relaxed">
-                Personalized tips to showcase your authentic personality and attract compatible matches.
-              </p>
-            </div>
-            <div className="p-5 rounded-2xl bg-stone-900 border border-stone-800">
-              <div className="font-semibold text-white text-sm mb-1">Safety Guardrails</div>
-              <p className="text-stone-400 text-xs leading-relaxed">
-                Automated detection of financial solicitation and deceptive links before they reach you.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials (Explicitly marked as placeholder content as required) */}
+      {/* Testimonials */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-stone-900">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-4">
@@ -246,7 +239,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Footer */}
+      {/* Footer */}
       <footer className="mt-auto border-t border-stone-800/80 bg-stone-950 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pb-8 border-b border-stone-900">
@@ -258,11 +251,12 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-stone-400">
+              <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
+              <Link href="/register" className="hover:text-white transition-colors">Register</Link>
               <Link href="/guidelines" className="hover:text-white transition-colors">Community Guidelines</Link>
               <Link href="/safety-tips" className="hover:text-white transition-colors">Safety Tips</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-              <Link href="/setup" className="text-rose-400 hover:text-rose-300 transition-colors">Supabase Setup</Link>
             </div>
           </div>
 

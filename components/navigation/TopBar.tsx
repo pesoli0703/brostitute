@@ -2,14 +2,14 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Sparkles, Shield, Database, Crown } from 'lucide-react'
+import { Sparkles, Shield, Database, Crown, User, LogIn, UserPlus, LogOut } from 'lucide-react'
 import { useAuth } from '@/lib/context/AuthContext'
 
 export function TopBar() {
-  const { isConfigured, profile } = useAuth()
+  const { isConfigured, profile, user, signOut } = useAuth()
 
   return (
-    <header className="sticky top-0 z-30 bg-stone-950/80 backdrop-blur-md border-b border-stone-800/80 px-4 py-3">
+    <header className="sticky top-0 z-30 bg-stone-950/85 backdrop-blur-md border-b border-stone-800/80 px-4 py-3">
       <div className="max-w-md md:max-w-4xl mx-auto flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 group">
@@ -21,7 +21,7 @@ export function TopBar() {
           </span>
         </Link>
 
-        {/* Action pills */}
+        {/* Action pills & Auth status */}
         <div className="flex items-center gap-2">
           {/* Supabase Status Pill */}
           <Link
@@ -63,6 +63,36 @@ export function TopBar() {
             >
               Admin
             </Link>
+          )}
+
+          {/* Auth: Log in / Register OR Profile Avatar */}
+          {user ? (
+            <Link
+              href="/profile"
+              className="w-7 h-7 rounded-full overflow-hidden border border-rose-500/80 hover:scale-105 transition-transform"
+              title="My Profile"
+            >
+              <img
+                src={profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/login"
+                className="px-2.5 py-1 rounded-xl text-xs font-semibold text-stone-300 hover:text-white transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/register"
+                className="px-3 py-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-950 transition-all"
+              >
+                Join Free
+              </Link>
+            </div>
           )}
         </div>
       </div>

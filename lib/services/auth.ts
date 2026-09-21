@@ -14,7 +14,6 @@ export interface SignUpParams {
 export const authService = {
   async signUp(params: SignUpParams) {
     if (!isSupabaseConfigured()) {
-      // Local fallback session
       const demoUser = {
         id: 'local-user-id',
         email: params.email,
@@ -48,7 +47,6 @@ export const authService = {
 
     if (error) throw error
 
-    // Ensure profile row exists
     if (data.user) {
       await supabase.from('profiles').upsert({
         id: data.user.id,
@@ -97,6 +95,45 @@ export const authService = {
     return { data, error: null }
   },
 
+  async signInWithOAuth(provider: 'google' | 'github') {
+    if (!isSupabaseConfigured()) {
+      return this.signIn('user@example.com', 'password123')
+    }
+
+    const supabase = getSupabaseBrowserClient()
+    const redirectTo = typeof window !== 'undefined' 
+      ? `${window.location.origin}/auth/callback`
+      : undefined
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo
+      }
+    })
+
+    if (error) throw error
+    return { data, error: null }
+  },
+
+  async resetPassword(email: string) {
+    if (!isSupabaseConfigured()) {
+      return { error: null }
+    }
+
+    const supabase = getSupabaseBrowserClient()
+    const redirectTo = typeof window !== 'undefined'
+      ? `${window.location.origin}/reset-password`
+      : undefined
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo
+    })
+
+    if (error) throw error
+    return { data, error: null }
+  },
+
   async signOut() {
     if (!isSupabaseConfigured()) {
       if (typeof window !== 'undefined') {
@@ -131,7 +168,6 @@ export const authService = {
       if (typeof window !== 'undefined') {
         const cached = localStorage.getItem('brostitute_local_profile')
         if (cached) return JSON.parse(cached)
-        // Default demo profile for the preview session
         const defaultProfile: Profile = {
           id: 'local-user-id',
           first_name: 'Sophia',
