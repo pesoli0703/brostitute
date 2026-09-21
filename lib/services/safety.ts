@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '../supabase/client'
 import { ReportReason, Report } from '../supabase/types'
+import { isUUID } from '../utils'
 
 export const safetyService = {
   async reportProfile(params: {
@@ -8,7 +9,7 @@ export const safetyService = {
     reason: ReportReason
     details?: string
   }): Promise<Report> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(params.reporterId) || !isUUID(params.reportedId)) {
       const mockReport: Report = {
         id: 'rep-' + Date.now(),
         reporter_id: params.reporterId,
@@ -49,7 +50,7 @@ export const safetyService = {
   },
 
   async blockUser(blockerId: string, blockedId: string): Promise<void> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(blockerId) || !isUUID(blockedId)) {
       if (typeof window !== 'undefined') {
         const blocked = JSON.parse(localStorage.getItem('brostitute_blocked_ids') || '[]')
         if (!blocked.includes(blockedId)) {
@@ -72,7 +73,7 @@ export const safetyService = {
   },
 
   async requestAccountDeletion(userId: string): Promise<void> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(userId)) {
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
@@ -81,7 +82,6 @@ export const safetyService = {
     }
 
     const supabase = getSupabaseBrowserClient()
-    // Soft-ban/deactivate immediately, then queue for purge
     await supabase.from('profiles').update({ is_banned: true, is_incognito: true }).eq('id', userId)
     await supabase.auth.signOut()
   }

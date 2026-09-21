@@ -2,10 +2,11 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from '../supabase/clie
 import { Match, Profile, Message } from '../supabase/types'
 import { SEED_PROFILES } from '../mockData'
 import { profilesService } from './profiles'
+import { isUUID } from '../utils'
 
 export const matchesService = {
   async getMatches(currentUserId: string): Promise<Match[]> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(currentUserId)) {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('brostitute_matches')
         if (stored) {
@@ -13,7 +14,6 @@ export const matchesService = {
           if (parsed.length > 0) return parsed
         }
 
-        // Seed with two default matches for demo exploration
         const defaultMatches: Match[] = [
           {
             id: 'match-user-demo-1',
@@ -72,7 +72,6 @@ export const matchesService = {
       return []
     }
 
-    // Populate partner details for each match
     const enrichedMatches: Match[] = await Promise.all(
       (data || []).map(async (m: any) => {
         const partnerId = m.user1_id === currentUserId ? m.user2_id : m.user1_id

@@ -2,6 +2,7 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from '../supabase/clie
 import { Profile, LikeAction, Match } from '../supabase/types'
 import { SEED_PROFILES } from '../mockData'
 import { profilesService, calculateAge } from './profiles'
+import { isUUID } from '../utils'
 
 export interface DiscoveryFilters {
   minAge?: number
@@ -14,7 +15,7 @@ export interface DiscoveryFilters {
 
 export const discoveryService = {
   async getProfiles(currentUserId: string, filters?: DiscoveryFilters): Promise<Profile[]> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(currentUserId)) {
       let profiles = [...SEED_PROFILES]
       profiles = profiles.filter(p => p.id !== currentUserId)
 
@@ -54,7 +55,7 @@ export const discoveryService = {
       .select('receiver_id')
       .eq('sender_id', currentUserId)
 
-    const swipedIds = ((alreadySwiped || []) as any[]).map(item => item.receiver_id)
+    const swipedIds = ((alreadySwiped || []) as any[]).map(item => item.receiver_id).filter(id => isUUID(id))
     swipedIds.push(currentUserId)
 
     let query = supabase
@@ -62,7 +63,10 @@ export const discoveryService = {
       .select('*, photos(*), profile_interests(interests(*))')
       .eq('is_banned', false)
       .eq('is_suspended', false)
-      .not('id', 'in', `(${swipedIds.join(',')})`)
+
+    if (swipedIds.length > 0) {
+      query = query.not('id', 'in', `(${swipedIds.join(',')})`)
+    }
 
     if (filters?.city && filters.city !== 'All') {
       query = query.ilike('city', `%${filters.city}%`)
@@ -77,8 +81,7 @@ export const discoveryService = {
     }
 
     const { data, error } = await query.limit(20)
-    if (error) {
-      console.error('Error fetching discovery profiles:', error)
+    if (error || !data || data.length === 0) {
       return SEED_PROFILES.filter(p => p.id !== currentUserId)
     }
 
@@ -90,7 +93,7 @@ export const discoveryService = {
     receiverId: string,
     action: LikeAction
   ): Promise<{ isMatch: boolean; match?: Match; partner?: Profile }> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(senderId) || !isUUID(receiverId)) {
       if (typeof window !== 'undefined') {
         const swiped = JSON.parse(sessionStorage.getItem('brostitute_swiped_ids') || '[]')
         swiped.push(receiverId)

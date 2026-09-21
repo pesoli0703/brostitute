@@ -16,7 +16,9 @@ import {
   Check,
   Sparkles,
   Heart,
-  Crown
+  Crown,
+  LogIn,
+  UserPlus
 } from 'lucide-react'
 import { useAuth } from '@/lib/context/AuthContext'
 import { useToast } from '@/lib/context/ToastContext'
@@ -25,10 +27,11 @@ import { SEED_INTERESTS } from '@/lib/mockData'
 import { TopBar } from '@/components/navigation/TopBar'
 import { MobileNavBar } from '@/components/navigation/MobileNavBar'
 import { RelationshipIntention } from '@/lib/supabase/types'
+import { isUUID } from '@/lib/utils'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { profile, updateLocalProfile, signOut } = useAuth()
+  const { user, profile, updateLocalProfile, signOut } = useAuth()
   const { success, error } = useToast()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -74,7 +77,8 @@ export default function ProfilePage() {
         is_incognito: isIncognito
       }
 
-      await profilesService.updateProfile(profile?.id || 'local-user-id', updates)
+      const targetId = user?.id || profile?.id || 'local-user-id'
+      await profilesService.updateProfile(targetId, updates)
       updateLocalProfile(updates)
       setIsEditing(false)
       success('Profile Updated', 'Your changes have been saved.')
@@ -88,9 +92,17 @@ export default function ProfilePage() {
   const handleRequestVerification = async () => {
     setVerifying(true)
     try {
-      await profilesService.submitVerification(profile?.id || 'local-user-id', avatarUrl)
-      updateLocalProfile({ verification_status: 'verified', is_verified: true })
-      success('Verification Submitted', 'Your profile has been verified with a blue badge!')
+      const targetId = user?.id || profile?.id
+      if (!user || !isUUID(targetId)) {
+        // Guest mode verification
+        updateLocalProfile({ verification_status: 'verified', is_verified: true })
+        success('Verification Badge Active! 🌟', 'Guest preview verified. Sign in to submit photo ID to Supabase.')
+        return
+      }
+
+      await profilesService.submitVerification(targetId, avatarUrl)
+      updateLocalProfile({ verification_status: 'pending' })
+      success('Verification Submitted', 'Your verification request has been submitted for admin review.')
     } catch (err: any) {
       error('Verification error', err.message)
     } finally {
@@ -110,7 +122,31 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col pb-24 md:pb-8">
       <TopBar />
 
-      <main className="flex-1 max-w-lg w-full mx-auto px-4 py-4 space-y-6">
+      <main className="flex-1 max-w-lg w-full mx-auto px-4 py-4 space-y-5">
+        {/* Guest Mode Callout if not signed into Supabase Auth */}
+        {!user && (
+          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs animate-in fade-in">
+            <div>
+              <p className="font-semibold text-amber-200">Browsing as Guest (Sophia)</p>
+              <p className="text-[11px] text-stone-400">Sign in to save and sync your real profile to Supabase.</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link
+                href="/login"
+                className="px-2.5 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs font-semibold"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Profile Card Header */}
         <div className="relative p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl flex flex-col items-center text-center">
           <div className="relative w-28 h-28 rounded-3xl overflow-hidden border-2 border-rose-500 shadow-xl shadow-rose-950/40 mb-3">
@@ -150,7 +186,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleRequestVerification}
                 disabled={verifying}
-                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all shrink-0"
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all shrink-0"
               >
                 {verifying ? 'Verifying...' : 'Verify Now'}
               </button>

@@ -1,11 +1,12 @@
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '../supabase/client'
 import { Profile, Photo, Interest, VerificationRequest } from '../supabase/types'
 import { SEED_INTERESTS, SEED_PROFILES } from '../mockData'
+import { isUUID } from '../utils'
 
 export function calculateAge(dobString: string): number {
   if (!dobString) return 25
   const birthDate = new Date(dobString)
-  const today = new Date('2026-09-20') // Consistent with system date
+  const today = new Date('2026-09-20')
   let age = today.getFullYear() - birthDate.getFullYear()
   const m = today.getMonth() - birthDate.getMonth()
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
@@ -16,8 +17,8 @@ export function calculateAge(dobString: string): number {
 
 export const profilesService = {
   async getProfile(id: string): Promise<Profile | null> {
-    if (!isSupabaseConfigured()) {
-      if (id === 'local-user-id') {
+    if (!isSupabaseConfigured() || !isUUID(id)) {
+      if (id === 'local-user-id' || !isUUID(id)) {
         const stored = typeof window !== 'undefined' ? localStorage.getItem('brostitute_local_profile') : null
         if (stored) return JSON.parse(stored)
       }
@@ -30,14 +31,14 @@ export const profilesService = {
       .from('profiles')
       .select('*, photos(*), profile_interests(interests(*))')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
     if (error || !data) return null
     return data as unknown as Profile
   },
 
   async updateProfile(id: string, updates: Partial<Profile>): Promise<Profile> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(id)) {
       if (typeof window !== 'undefined') {
         const current = localStorage.getItem('brostitute_local_profile')
         const parsed = current ? JSON.parse(current) : {}
@@ -81,7 +82,7 @@ export const profilesService = {
   },
 
   async submitVerification(profileId: string, selfieUrl: string): Promise<VerificationRequest> {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !isUUID(profileId)) {
       const mockReq: VerificationRequest = {
         id: 'vr-' + Date.now(),
         profile_id: profileId,
@@ -117,8 +118,7 @@ export const profilesService = {
   },
 
   async uploadPhoto(file: File, profileId: string): Promise<string> {
-    if (!isSupabaseConfigured()) {
-      // Return a base64 or object URL for local preview
+    if (!isSupabaseConfigured() || !isUUID(profileId)) {
       return URL.createObjectURL(file)
     }
 
