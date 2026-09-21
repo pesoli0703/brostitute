@@ -1,0 +1,46 @@
+{
+  "name": "Brostitute - Modern Intentional Dating",
+  "short_name": "Brostitute",
+  "description": "A modern, private and premium dating platform designed for women to discover and connect with high-intent men.",
+  "start_url": "/discover",
+  "display": "standalone",
+  "background_color": "#0c0a09",
+  "theme_color": "#0c0a09",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "categories": ["lifestyle", "social"],
+  "shortcuts": [
+    {
+      "name": "Discover",
+      "short_name": "Discover",
+      "description": "Find compatible matches",
+      "url": "/discover",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "Open your conversations",
+      "url": "/matches",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
