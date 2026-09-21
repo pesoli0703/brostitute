@@ -2,6 +2,8 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from '../supabase/clie
 import { SubscriptionPlan, Subscription } from '../supabase/types'
 import { SEED_PLANS } from '../mockData'
 
+export const FLUTTERWAVE_PAYMENT_LINK = 'https://flutterwave.com/pay/ktogctcjjysj'
+
 export interface InitializePaymentParams {
   profileId: string
   email: string
@@ -51,45 +53,16 @@ export const paymentService = {
     return data as unknown as Subscription
   },
 
-  /**
-   * Initializes a transaction with Paystack or Flutterwave.
-   * In production, this calls your Next.js API route (/api/payments/initialize)
-   * which securely holds the PAYSTACK_SECRET_KEY or FLUTTERWAVE_SECRET_KEY.
-   */
-  async initializeCheckout(params: InitializePaymentParams): Promise<{ checkoutUrl: string; reference: string }> {
+  async activateSubscription(profileId: string, planId: string, provider: 'flutterwave' | 'paystack', reference?: string): Promise<Subscription> {
     const plans = await this.getPlans()
-    const plan = plans.find(p => p.id === params.planId) || plans[0]
+    const plan = plans.find(p => p.id === planId) || plans[0]
 
-    // If API route is called
-    try {
-      const res = await fetch('/api/payments/initialize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planId: plan.id,
-          email: params.email,
-          provider: params.provider,
-          amountCents: plan.price_cents
-        })
-      })
-
-      if (res.ok) {
-        const result = await res.json()
-        return result
-      }
-    } catch {
-      // Fallback to simulated checkout for preview
-    }
-
-    const mockRef = `ref_${params.provider}_${Date.now()}`
-
-    // Grant simulated trial subscription locally
-    const mockSub: Subscription = {
+    const newSub: Subscription = {
       id: 'sub-' + Date.now(),
-      profile_id: params.profileId,
+      profile_id: profileId,
       plan_id: plan.id,
-      provider: params.provider,
-      provider_reference: mockRef,
+      provider,
+      provider_reference: reference || `ref_${provider}_${Date.now()}`,
       status: 'active',
       current_period_start: new Date().toISOString(),
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -98,9 +71,46 @@ export const paymentService = {
       plan
     }
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('brostitute_user_subscription', JSON.stringify(mockSub))
+    if (!isSupabaseConfigured()) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('brostitute_user_subscription', JSON.stringify(newSub))
+      }
+      return newSub
     }
+
+    const supabase = getSupabaseBrowserClient()
+    await supabase.from('subscriptions').upsert({
+      profile_id: profileId,
+      plan_id: plan.id,
+      provider,
+      provider_reference: newSub.provider_reference,
+      status: 'active',
+      current_period_start: newSub.current_period_start,
+      current_period_end: newSub.current_period_end
+    })
+
+    return newSub
+  },
+
+  /**
+   * Initializes checkout with Flutterwave or Paystack.
+   */
+  async initializeCheckout(params: InitializePaymentParams): Promise<{ checkoutUrl: string; reference: string }> {
+    const plans = await this.getPlans()
+    const plan = plans.find(p => p.id === params.planId) || plans[0]
+
+    if (params.provider === 'flutterwave') {
+      // Use your live Flutterwave payment link
+      const checkoutUrl = FLUTTERWAVE_PAYMENT_LINK
+      return {
+        checkoutUrl,
+        reference: `flw_${Date.now()}`
+      }
+    }
+
+    // Default or Paystack fallback
+    const mockRef = `ref_paystack_${Date.now()}`
+    await this.activateSubscription(params.profileId, plan.id, 'paystack', mockRef)
 
     return {
       checkoutUrl: `/premium?success=true&ref=${mockRef}`,
